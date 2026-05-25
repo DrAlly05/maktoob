@@ -6,7 +6,7 @@ class FileManager {
   // Opens the local system explorer securely using stable API layers
   static Future<File?> pickEpubFile() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['epub'],
       );
