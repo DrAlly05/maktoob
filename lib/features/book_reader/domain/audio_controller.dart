@@ -11,8 +11,8 @@ class AudioController {
   void _initializeTts() async {
     // Set baseline audio parameters matching standard narration pacing
     await _tts.setSpeechRate(0.5); // Elegant, steady narrative flow
-    await _tts.setPitch(1.0);      // Well-balanced vocal depth tone
-    
+    await _tts.setPitch(1.0); // Well-balanced vocal depth tone
+
     _tts.setStartHandler(() => isSpeaking = true);
     _tts.setCompletionHandler(() => isSpeaking = false);
     _tts.setErrorHandler((msg) => isSpeaking = false);

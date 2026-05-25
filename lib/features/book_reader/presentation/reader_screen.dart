@@ -48,16 +48,19 @@ class _ReaderScreenState extends State<ReaderScreen> {
       return;
     }
 
-    final cleanedArabicText = _cleanHTMLMetadataContents(chapters[_activeChapterPointer].HtmlContent ?? '');
+    final cleanedArabicText = _cleanHTMLMetadataContents(
+        chapters[_activeChapterPointer].HtmlContent ?? '');
     if (cleanedArabicText.isEmpty) return;
 
     HapticFeedback.mediumImpact();
     setState(() {
       _translationEngineBusy = true;
-      _swahiliTranslationBlock = "TRANSLATING VIA SECURE ON-DEVICE NEURAL MODELS...";
+      _swahiliTranslationBlock =
+          "TRANSLATING VIA SECURE ON-DEVICE NEURAL MODELS...";
     });
 
-    final outputSwahiliText = await _translationController.translateArabicToSwahili(cleanedArabicText);
+    final outputSwahiliText = await _translationController
+        .translateArabicToSwahili(cleanedArabicText);
 
     setState(() {
       _translationEngineBusy = false;
@@ -74,7 +77,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
       appBar: AppBar(
-        title: Text(widget.book.Title?.toUpperCase() ?? 'CANVAS LAYER', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 2)),
+        title: Text(widget.book.Title?.toUpperCase() ?? 'CANVAS LAYER',
+            style: const TextStyle(
+                fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 2)),
         backgroundColor: const Color(0xFF0F0F0F),
         elevation: 0,
         leading: IconButton(
@@ -88,14 +93,18 @@ class _ReaderScreenState extends State<ReaderScreen> {
             onPressed: () {
               HapticFeedback.selectionClick();
               setState(() {
-                _customReaderFontSize = _customReaderFontSize >= 26.0 ? 16.0 : _customReaderFontSize + 2.0;
+                _customReaderFontSize = _customReaderFontSize >= 26.0
+                    ? 16.0
+                    : _customReaderFontSize + 2.0;
               });
             },
           ),
           IconButton(
             icon: Icon(_translationEngineBusy
                 ? Icons.hourglass_empty_rounded
-                : (_audioController.isSpeaking ? Icons.stop_circle_outlined : Icons.translate_rounded)),
+                : (_audioController.isSpeaking
+                    ? Icons.stop_circle_outlined
+                    : Icons.translate_rounded)),
             color: Colors.tealAccent,
             onPressed: _runAITranslationPipeline,
           ),
@@ -105,70 +114,85 @@ class _ReaderScreenState extends State<ReaderScreen> {
       body: chapters.isEmpty
           ? const Center(child: Text('Empty book node configuration detected.'))
           : PageView.builder(
-        controller: _pageController,
-        physics: const BouncingScrollPhysics(),
-        itemCount: chapters.length,
-        onPageChanged: (index) {
-          _audioController.stop();
-          setState(() {
-            _activeChapterPointer = index;
-            _swahiliTranslationBlock = "";
-          });
-        },
-        itemBuilder: (context, index) {
-          final textString = _cleanHTMLMetadataContents(chapters[index].HtmlContent ?? '');
+              controller: _pageController,
+              physics: const BouncingScrollPhysics(),
+              itemCount: chapters.length,
+              onPageChanged: (index) {
+                _audioController.stop();
+                setState(() {
+                  _activeChapterPointer = index;
+                  _swahiliTranslationBlock = "";
+                });
+              },
+              itemBuilder: (context, index) {
+                final textString = _cleanHTMLMetadataContents(
+                    chapters[index].HtmlContent ?? '');
 
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: const Color(0xFF1C1C1E), borderRadius: BorderRadius.circular(6)),
-                      child: Text("CHAPTER ${index + 1}", style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  textString,
-                  textDirection: TextDirection.rtl,
-                  style: TextStyle(
-                    fontSize: _customReaderFontSize,
-                    height: 1.8,
-                    color: const Color(0xFFE5E5E7),
-                    letterSpacing: 0.2,
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 28.0, vertical: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                                color: const Color(0xFF1C1C1E),
+                                borderRadius: BorderRadius.circular(6)),
+                            child: Text("CHAPTER ${index + 1}",
+                                style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        textString,
+                        textDirection: TextDirection.rtl,
+                        style: TextStyle(
+                          fontSize: _customReaderFontSize,
+                          height: 1.8,
+                          color: const Color(0xFFE5E5E7),
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      if (_swahiliTranslationBlock.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32.0),
+                          child:
+                              Divider(color: Color(0xFF222222), thickness: 1),
+                        ),
+                        const Text(
+                          "SWAHILI NEURAL DICTATION STREAM",
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.tealAccent,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _swahiliTranslationBlock,
+                          style: TextStyle(
+                            fontSize: _customReaderFontSize - 1.0,
+                            height: 1.6,
+                            color: Colors.white70,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ),
-                if (_swahiliTranslationBlock.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 32.0),
-                    child: Divider(color: Color(0xFF222222), thickness: 1),
-                  ),
-                  const Text(
-                    "SWAHILI NEURAL DICTATION STREAM",
-                    style: TextStyle(fontSize: 10, color: Colors.tealAccent, fontWeight: FontWeight.bold, letterSpacing: 1.5),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _swahiliTranslationBlock,
-                    style: TextStyle(
-                      fontSize: _customReaderFontSize - 1.0,
-                      height: 1.6,
-                      color: Colors.white70,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ],
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }

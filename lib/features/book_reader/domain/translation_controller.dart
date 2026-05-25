@@ -14,11 +14,11 @@ class TranslationController {
     if (_isModelDownloaded) return;
 
     final modelManager = OnDeviceTranslatorModelManager();
-    
+
     // Natively download language packages using official string tags
     await modelManager.downloadModel('ar');
     await modelManager.downloadModel('sw');
-    
+
     _isModelDownloaded = true;
   }
 

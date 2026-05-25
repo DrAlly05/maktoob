@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
+import 'features/book_reader/presentation/book_reader_screen.dart';
 
 void main() {
   runApp(const MaktoobApp());
@@ -39,12 +40,15 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 40),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 textStyle: const TextStyle(fontSize: 18),
               ),
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Book Reader coming in next step...')),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const BookReaderScreen()),
                 );
               },
               child: const Text('Open Book Reader'),
