@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "295943034807",
+    "project_id": "maktoob-app",
+    "storage_bucket": "maktoob-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:295943034807:android:dc2740854bc9aec1c4fa32",
+        "android_client_info": {
+          "package_name": "com.maktoob.app.maktoob"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhv9srbzu8S-4RiWz5ZmQRvylD7603HVs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

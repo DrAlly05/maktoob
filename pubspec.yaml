@@ -1,0 +1,34 @@
+name: maktoob
+description: "A premium personal audiobook and e-reading application."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^4.9.0
+  firebase_auth: ^6.5.1
+  cloud_firestore: ^6.4.1
+  epubx: ^4.0.0
+  file_picker: ^11.0.2
+  flutter_tts: ^4.1.1
+  google_mlkit_translation: ^0.13.1
+  firebase_storage: ^13.4.1
+  path_provider: ^2.1.5
+  google_fonts: ^8.1.0
+  syncfusion_flutter_pdfviewer: ^33.2.7
+  just_audio: ^0.10.5
+  audio_video_progress_bar: ^2.0.3
+  just_audio_background: ^0.0.1-beta.17
+  provider: ^6.1.5+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
