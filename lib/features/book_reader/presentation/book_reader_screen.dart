@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import '../data/mock_translation_service.dart';
+import 'package:maktoob/features/book_reader/data/mock_translation_service.dart';
 
 class BookReaderScreen extends StatefulWidget {
   const BookReaderScreen({super.key});
@@ -21,11 +21,14 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
     });
 
     try {
-      final translation = await _translationService
-          .translateToSwahili("Welcome to a world without language barriers.");
+      final translation = await _translationService.translateToSwahili(
+        "Welcome to a world without language barriers.",
+      );
+
       if (translation.trim().isEmpty) {
         throw Exception("Empty translation");
       }
+
       setState(() {
         _translatedText = translation;
       });
@@ -45,37 +48,58 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Maktoob Reader 📖'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Stack(
         children: [
+          // Underlay PDF Reader layer
           SfPdfViewer.asset('assets/sample.pdf'),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_isLoading)
-                  const CircularProgressIndicator()
-                else
-                  ElevatedButton(
-                    onPressed: _translateText,
-                    child: const Text('Translate to Swahili'),
-                  ),
-                if (_translatedText != null) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    color: Colors.black54,
-                    child: Text(
-                      _translatedText!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
+
+          // Overlay Control and Translation Panel positioned at the bottom
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 24,
+            child: Card(
+              color: Colors.black87,
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: CircularProgressIndicator(color: Colors.tealAccent),
+                      )
+                    else
+                      ElevatedButton.icon(
+                        onPressed: _translateText,
+                        icon: const Icon(Icons.g_translate),
+                        label: const Text('Translate to Swahili'),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              ],
+                    if (_translatedText != null) ...[
+                      const Divider(color: Colors.white24, height: 24),
+                      Text(
+                        _translatedText!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
         ],

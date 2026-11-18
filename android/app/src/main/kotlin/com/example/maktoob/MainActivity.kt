@@ -1,4 +1,4 @@
-package com.maktoob.app.maktoob
+package com.example.maktoob
 
 import io.flutter.embedding.android.FlutterActivity
 
