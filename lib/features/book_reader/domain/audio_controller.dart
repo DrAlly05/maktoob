@@ -2,18 +2,33 @@ import 'package:flutter_tts/flutter_tts.dart';
 
 /// Reads Swahili text aloud with the phone's own voice.
 class AudioController {
+  /// Google's voice engine. It has Swahili. Samsung's own engine does not.
+  static const String _googleEngine = 'com.google.android.tts';
+
   final FlutterTts _tts = FlutterTts();
-  bool _ready = false;
+  bool _configured = false;
   bool _voiceAvailable = false;
+  String _engineNote = '';
 
-  /// Sets the voice up once.
+  /// A short technical line about the voice engines on this phone,
+  /// shown when no Swahili voice is found.
+  String get engineNote => _engineNote;
+
+  /// Gets the voice ready.
   ///
-  /// Returns false when the phone has no Swahili voice installed.
+  /// Returns false when the phone has no Swahili voice. The check is
+  /// repeated on every call until a voice is found, so a reader who
+  /// installs one does not have to restart the app.
   Future<bool> prepare() async {
-    if (_ready) return _voiceAvailable;
+    if (_voiceAvailable) return true;
 
-    // Makes speak() finish only when the voice has finished the passage.
-    await _tts.awaitSpeakCompletion(true);
+    if (!_configured) {
+      // Makes speak() finish only when the voice has finished the passage.
+      await _tts.awaitSpeakCompletion(true);
+      _configured = true;
+    }
+
+    await _preferGoogleEngine();
     await _tts.setSpeechRate(0.5);
     await _tts.setPitch(1.0);
 
@@ -25,9 +40,27 @@ class AudioController {
         break;
       }
     }
-
-    _ready = true;
     return _voiceAvailable;
+  }
+
+  /// Switches to Google's engine when the phone has it, whatever the
+  /// phone's default engine is.
+  Future<void> _preferGoogleEngine() async {
+    try {
+      final engines = await _tts.getEngines;
+      final names = engines is List
+          ? engines.map((engine) => engine.toString()).toList()
+          : <String>[];
+      _engineNote = names.isEmpty
+          ? 'Voice engines found: none.'
+          : 'Voice engines found: ${names.join(', ')}.';
+      if (names.contains(_googleEngine)) {
+        await _tts.setEngine(_googleEngine);
+      }
+    } catch (_) {
+      // Only Android has selectable engines. Other systems use their own voice.
+      _engineNote = '';
+    }
   }
 
   /// Speaks one passage and completes when the voice has finished it.

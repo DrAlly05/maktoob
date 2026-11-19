@@ -19,6 +19,12 @@ class ChapterText {
     caseSensitive: false,
   );
   static final RegExp _anyTag = RegExp(r'<[^>]*>');
+  static final RegExp _lineBreakTag = RegExp(r'<br\s*/?>', caseSensitive: false);
+  static final RegExp _heading = RegExp(
+    r'<h([1-3])\b[^>]*>(.*?)</h\1\s*>',
+    caseSensitive: false,
+    dotAll: true,
+  );
   static final RegExp _inlineSpace = RegExp(r'[ \t\r\f ]+');
   static final RegExp _numericEntity = RegExp(r'&#(x?)([0-9a-fA-F]+);');
   static final RegExp _sentenceEnd = RegExp(r'(?<=[.!?…؟۔])\s+');
@@ -58,6 +64,19 @@ class ChapterText {
       paragraphs.addAll(splitLong(clean, maxLength: maxLength));
     }
     return paragraphs;
+  }
+
+  /// Returns the first heading of a chapter file, or an empty string.
+  static String headingFromHtml(String html) {
+    final body = html.replaceAll(_hiddenBlocks, ' ');
+    final match = _heading.firstMatch(body);
+    if (match == null) return '';
+    final text = match
+        .group(2)!
+        .replaceAll('\n', ' ')
+        .replaceAll(_lineBreakTag, ' ')
+        .replaceAll(_anyTag, '');
+    return decodeEntities(text).replaceAll(_inlineSpace, ' ').trim();
   }
 
   /// Replaces HTML entities such as `&amp;` and `&#8220;` with real characters.

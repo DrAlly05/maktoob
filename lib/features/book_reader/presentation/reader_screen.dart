@@ -61,8 +61,69 @@ class _ReaderScreenState extends State<ReaderScreen> {
     super.dispose();
   }
 
-  /// Flattens the book's chapters and sub chapters into readable text.
+  /// Turns the book into sections of readable paragraphs.
+  ///
+  /// The book's own text files are read in reading order. The table of
+  /// contents is used only when that gives nothing, because many books
+  /// carry a table of contents this reader cannot follow.
   static List<_Chapter> _readChapters(EpubBook book) {
+    final fromFiles = _chaptersFromFiles(book);
+    if (fromFiles.isNotEmpty) return fromFiles;
+    return _chaptersFromContents(book);
+  }
+
+  static List<_Chapter> _chaptersFromFiles(EpubBook book) {
+    final htmlFiles = book.Content?.Html ?? const {};
+    if (htmlFiles.isEmpty) return const [];
+
+    // Reading order: the spine lists item ids, the manifest maps ids to files.
+    final fileNameById = <String, String>{};
+    for (final item in book.Schema?.Package?.Manifest?.Items ?? const []) {
+      final id = item.Id;
+      final href = item.Href;
+      if (id != null && href != null) fileNameById[id] = href;
+    }
+
+    final pages = <String>[];
+    final seen = <String>{};
+    for (final entry in book.Schema?.Package?.Spine?.Items ?? const []) {
+      final fileName = fileNameById[entry.IdRef];
+      if (fileName == null || !seen.add(fileName)) continue;
+      final content = htmlFiles[fileName]?.Content;
+      if (content != null) pages.add(content);
+    }
+
+    // A book with a broken reading order is still read, in file order.
+    if (pages.isEmpty) {
+      for (final file in htmlFiles.values) {
+        final content = file.Content;
+        if (content != null) pages.add(content);
+      }
+    }
+
+    final chapters = <_Chapter>[];
+    for (final html in pages) {
+      final paragraphs = ChapterText.paragraphsFromHtml(html);
+      if (paragraphs.isEmpty) continue;
+
+      final title = ChapterText.headingFromHtml(html);
+      if (title.isNotEmpty && paragraphs.first == title) {
+        paragraphs.removeAt(0);
+      }
+      if (paragraphs.isEmpty) continue;
+
+      chapters.add(
+        _Chapter(
+          title,
+          paragraphs,
+          ChapterText.detectLanguage(paragraphs.take(8).join(' ')),
+        ),
+      );
+    }
+    return chapters;
+  }
+
+  static List<_Chapter> _chaptersFromContents(EpubBook book) {
     final chapters = <_Chapter>[];
 
     void visit(List<EpubChapter>? nodes) {
@@ -84,6 +145,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
     visit(book.Chapters);
     return chapters;
+  }
+
+  /// A short technical line shown when a book cannot be read, so the
+  /// cause can be found from a screenshot.
+  static String _describeBook(EpubBook book) {
+    final files = book.Content?.Html?.length ?? 0;
+    final order = book.Schema?.Package?.Spine?.Items?.length ?? 0;
+    final contents = book.Chapters?.length ?? 0;
+    return 'Text files: $files. Reading order: $order. Contents: $contents.';
   }
 
   String _key(int chapter, int paragraph) => '$chapter:$paragraph';
@@ -139,8 +209,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
       setState(() {
         _status = hasVoice
             ? null
-            : 'This phone has no Swahili voice installed. '
-                'Showing the Swahili text only.';
+            : 'No Swahili voice on this phone yet, so only the text is shown. '
+                'To hear it, install "Speech Recognition & Synthesis" by '
+                'Google from the Play Store and download Swahili inside it.\n'
+                '${_audio.engineNote}';
       });
 
       for (var i = fromParagraph; i < chapter.paragraphs.length; i++) {
@@ -245,11 +317,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
               ),
             ),
       body: _chapters.isEmpty
-          ? const Center(
+          ? Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Text(
-                  'No readable text was found in this book.',
+                  'No readable text was found in this book.\n\n'
+                  '${_describeBook(widget.book)}',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -281,7 +354,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
-              'CHAPTER ${chapterIndex + 1} OF ${_chapters.length}',
+              'SECTION ${chapterIndex + 1} OF ${_chapters.length}',
               style: const TextStyle(
                 fontSize: 11,
                 letterSpacing: 1.2,

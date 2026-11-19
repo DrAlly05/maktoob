@@ -24,6 +24,20 @@ void main() {
     });
   });
 
+  group('headingFromHtml', () {
+    test('finds the first heading and cleans it', () {
+      final heading = ChapterText.headingFromHtml(
+        '<head><title>Ignore</title></head><body>'
+        '<h2 class="t"><span>Thought</span> &amp; Character</h2><p>Text</p></body>',
+      );
+      expect(heading, 'Thought & Character');
+    });
+
+    test('returns an empty string when there is no heading', () {
+      expect(ChapterText.headingFromHtml('<p>Only text</p>'), '');
+    });
+  });
+
   group('splitLong', () {
     test('leaves a short paragraph whole', () {
       expect(ChapterText.splitLong('Short one.', maxLength: 100), ['Short one.']);
