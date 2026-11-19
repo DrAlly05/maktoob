@@ -30,3 +30,6 @@ Status is PROPOSED until Dr. Ally Said confirms it, then CONFIRMED with the date
 | 2026-11-18 | Reading circles show progress only, no chat | Avoids moderation duties in both app stores | PROPOSED |
 | 2026-11-18 | About screen carries the founder credit (Dr. Ally Said) with his social and website links | Standing rule for every app | CONFIRMED 2026-11-18 |
 | 2026-11-18 | Website and legal pages at maktoob.lunomj.com | Same pattern as zerotofive.lunomj.com | PROPOSED |
+| 2026-11-19 | Android build uses Gradle 9.9.1, Android Gradle Plugin 9.3.3 and Kotlin 2.4.20 | Required by the installed Flutter. Same as Zero to Five | CONFIRMED (in the code) |
+| 2026-11-19 | Syncfusion PDF viewer and the demo reader screen removed. Home opens the real EPUB reader | Only the demo used them, and the demo loaded a file that did not exist. A PDF reader is still to be chosen | CONFIRMED (in the code) |
+| 2026-11-19 | file_picker raised from version 11 to 13 | Version 11 does not compile on the current Android tooling | CONFIRMED (in the code), build passes |

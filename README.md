@@ -189,7 +189,7 @@ Structural decisions:
 | Audio | just_audio with just_audio_background | Already in the project. Background and lock screen playback. |
 | On-phone translation | Google ML Kit translation | Already in the project. No cost, no internet once the language pack is downloaded. |
 | On-phone voice | flutter_tts | Already in the project. Uses the phone's own voices. |
-| Opening book files | epubx for EPUB, Syncfusion viewer for PDF | Already in the project. Syncfusion licence terms **TO VERIFY**. |
+| Opening book files | epubx for EPUB, file_picker to choose the file | Already in the project. A PDF reader is still to be chosen. |
 | Reading text from page photos | Google ML Kit text recognition, on the phone | No cost per page, no upload of raw photos. Accuracy on curved pages **TO VERIFY**. |
 | Sign-in, database, files, push, crash reports | Firebase (Auth, Firestore, Storage, Messaging, Crashlytics, App Check, Remote Config) | Project `maktoob-app` already exists. Which Google account owns it **TO VERIFY**. |
 | Pipeline | Python on Cloud Run, started by an upload or by a listener reaching a new part | Same language as the existing content engines. |
