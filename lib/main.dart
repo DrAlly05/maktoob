@@ -5,8 +5,8 @@ import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/kisima.dart';
 import 'features/about/about_sheet.dart';
+import 'features/book_reader/domain/book_loader.dart';
 import 'features/book_reader/presentation/reader_screen.dart';
-import 'file_manager.dart';
 
 void main() {
   runApp(const MaktoobApp());
@@ -50,11 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openBook() async {
     if (_opening) return;
 
-    final file = await FileManager.pickEpubFile();
+    final file = await BookLoader.pick();
     if (file == null || !mounted) return;
 
     setState(() => _opening = true);
-    final book = await FileManager.parseEpub(file);
+    final book = await BookLoader.load(file);
     if (!mounted) return;
     setState(() => _opening = false);
 
@@ -151,7 +151,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const _Step(
                 number: '1',
                 title: 'Chagua kitabu',
-                body: 'Faili la EPUB lililo kwenye simu yako.',
+                body: 'Faili la EPUB, PDF, Word au maandishi (TXT) lililo '
+                    'kwenye simu yako.',
               ),
               const _Step(
                 number: '2',

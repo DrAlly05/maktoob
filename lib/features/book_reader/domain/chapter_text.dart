@@ -79,6 +79,32 @@ class ChapterText {
     return decodeEntities(text).replaceAll(_inlineSpace, ' ').trim();
   }
 
+  static final RegExp _hyphenBreak = RegExp(r'([A-Za-z])-\n([a-z])');
+  static final RegExp _blankLine = RegExp(r'\n[ \t]*\n');
+
+  /// Turns plain text (a text file, or one page of a PDF) into paragraphs.
+  ///
+  /// A blank line ends a paragraph. A single line break is only layout.
+  static List<String> paragraphsFromPlainText(
+    String text, {
+    int maxLength = 700,
+  }) {
+    var clean = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+    // A word cut by a hyphen at the end of a line is joined again.
+    clean = clean.replaceAllMapped(
+      _hyphenBreak,
+      (match) => '${match.group(1)}${match.group(2)}',
+    );
+
+    final paragraphs = <String>[];
+    for (final block in clean.split(_blankLine)) {
+      final line = block.replaceAll('\n', ' ').replaceAll(_inlineSpace, ' ').trim();
+      if (line.isEmpty) continue;
+      paragraphs.addAll(splitLong(line, maxLength: maxLength));
+    }
+    return paragraphs;
+  }
+
   /// Replaces HTML entities such as `&amp;` and `&#8220;` with real characters.
   static String decodeEntities(String text) {
     var out = text;

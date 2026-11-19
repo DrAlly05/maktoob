@@ -1,10 +1,10 @@
-import 'package:epubx/epubx.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../domain/audio_controller.dart';
+import '../domain/book.dart';
 import '../domain/chapter_text.dart';
 import '../domain/translation_controller.dart';
 import 'reader_widgets.dart';
@@ -12,7 +12,7 @@ import 'reader_widgets.dart';
 /// Shows a book chapter by chapter. Each paragraph is translated into
 /// Swahili and read aloud one at a time, with the original kept above it.
 class ReaderScreen extends StatefulWidget {
-  final EpubBook book;
+  final Book book;
 
   const ReaderScreen({super.key, required this.book});
 
@@ -20,20 +20,12 @@ class ReaderScreen extends StatefulWidget {
   State<ReaderScreen> createState() => _ReaderScreenState();
 }
 
-class _Chapter {
-  final String title;
-  final List<String> paragraphs;
-  final BookLanguage language;
-
-  const _Chapter(this.title, this.paragraphs, this.language);
-}
-
 class _ReaderScreenState extends State<ReaderScreen> {
   final AudioController _audio = AudioController();
   final TranslationController _translator = TranslationController();
   final PageController _pageController = PageController();
 
-  late final List<_Chapter> _chapters;
+  late final List<BookSection> _chapters;
   final Map<String, String> _translations = {};
   final Map<String, GlobalKey> _paragraphKeys = {};
 
@@ -64,7 +56,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   @override
   void initState() {
     super.initState();
-    _chapters = _readChapters(widget.book);
+    _chapters = widget.book.sections;
   }
 
   @override
@@ -74,101 +66,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _translator.close();
     _pageController.dispose();
     super.dispose();
-  }
-
-  /// Turns the book into sections of readable paragraphs.
-  ///
-  /// The book's own text files are read in reading order. The table of
-  /// contents is used only when that gives nothing, because many books
-  /// carry a table of contents this reader cannot follow.
-  static List<_Chapter> _readChapters(EpubBook book) {
-    final fromFiles = _chaptersFromFiles(book);
-    if (fromFiles.isNotEmpty) return fromFiles;
-    return _chaptersFromContents(book);
-  }
-
-  static List<_Chapter> _chaptersFromFiles(EpubBook book) {
-    final htmlFiles = book.Content?.Html ?? const {};
-    if (htmlFiles.isEmpty) return const [];
-
-    // Reading order: the spine lists item ids, the manifest maps ids to files.
-    final fileNameById = <String, String>{};
-    for (final item in book.Schema?.Package?.Manifest?.Items ?? const []) {
-      final id = item.Id;
-      final href = item.Href;
-      if (id != null && href != null) fileNameById[id] = href;
-    }
-
-    final pages = <String>[];
-    final seen = <String>{};
-    for (final entry in book.Schema?.Package?.Spine?.Items ?? const []) {
-      final fileName = fileNameById[entry.IdRef];
-      if (fileName == null || !seen.add(fileName)) continue;
-      final content = htmlFiles[fileName]?.Content;
-      if (content != null) pages.add(content);
-    }
-
-    // A book with a broken reading order is still read, in file order.
-    if (pages.isEmpty) {
-      for (final file in htmlFiles.values) {
-        final content = file.Content;
-        if (content != null) pages.add(content);
-      }
-    }
-
-    final chapters = <_Chapter>[];
-    for (final html in pages) {
-      final paragraphs = ChapterText.paragraphsFromHtml(html);
-      if (paragraphs.isEmpty) continue;
-
-      final title = ChapterText.headingFromHtml(html);
-      if (title.isNotEmpty && paragraphs.first == title) {
-        paragraphs.removeAt(0);
-      }
-      if (paragraphs.isEmpty) continue;
-
-      chapters.add(
-        _Chapter(
-          title,
-          paragraphs,
-          ChapterText.detectLanguage(paragraphs.take(8).join(' ')),
-        ),
-      );
-    }
-    return chapters;
-  }
-
-  static List<_Chapter> _chaptersFromContents(EpubBook book) {
-    final chapters = <_Chapter>[];
-
-    void visit(List<EpubChapter>? nodes) {
-      for (final node in nodes ?? const <EpubChapter>[]) {
-        final paragraphs =
-            ChapterText.paragraphsFromHtml(node.HtmlContent ?? '');
-        if (paragraphs.isNotEmpty) {
-          chapters.add(
-            _Chapter(
-              (node.Title ?? '').trim(),
-              paragraphs,
-              ChapterText.detectLanguage(paragraphs.take(8).join(' ')),
-            ),
-          );
-        }
-        visit(node.SubChapters);
-      }
-    }
-
-    visit(book.Chapters);
-    return chapters;
-  }
-
-  /// A short technical line shown when a book cannot be read, so the
-  /// cause can be found from a screenshot.
-  static String _describeBook(EpubBook book) {
-    final files = book.Content?.Html?.length ?? 0;
-    final order = book.Schema?.Package?.Spine?.Items?.length ?? 0;
-    final contents = book.Chapters?.length ?? 0;
-    return 'Text files: $files. Reading order: $order. Contents: $contents.';
   }
 
   String _key(int chapter, int paragraph) => '$chapter:$paragraph';
@@ -367,7 +264,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
             padding: const EdgeInsets.all(24),
             child: Text(
               'Hakuna maandishi yanayosomeka yaliyopatikana kwenye '
-              'kitabu hiki.\n\n${_describeBook(widget.book)}',
+              'kitabu hiki.\n\n${widget.book.note}',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 15,
@@ -499,7 +396,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   Widget _buildChapter(int chapterIndex) {
     final k = AppColors.of(context);
     final chapter = _chapters[chapterIndex];
-    final bookTitle = (widget.book.Title ?? '').trim();
+    final bookTitle = widget.book.title.trim();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 40),
