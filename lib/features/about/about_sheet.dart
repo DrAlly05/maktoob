@@ -7,9 +7,10 @@ import '../../core/widgets/kisima.dart';
 
 /// Shows who made Maktoob and where to find him.
 void showAboutMaktoob(BuildContext context) {
+  final k = AppColors.of(context);
   showModalBottomSheet<void>(
     context: context,
-    backgroundColor: AppColors.deep,
+    backgroundColor: k.sunk,
     showDragHandle: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -37,6 +38,7 @@ class _AboutSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AppColors.of(context);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
@@ -44,7 +46,7 @@ class _AboutSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
                 WellMark(size: 40),
                 SizedBox(width: 12),
@@ -54,40 +56,40 @@ class _AboutSheet extends StatelessWidget {
                     fontFamily: AppTheme.display,
                     fontWeight: FontWeight.w600,
                     fontSize: 26,
-                    color: AppColors.lamp,
+                    color: k.heading,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'App ya kusoma na kusikiliza vitabu kwa lugha yako.',
               style: TextStyle(
                 fontSize: 15,
                 height: 1.5,
-                color: AppColors.ivory,
+                color: k.text,
               ),
             ),
             const SizedBox(height: 20),
             const DottedBand(),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'IMETENGENEZWA NA',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 2,
-                color: AppColors.dim,
+                color: k.caption,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Dkt. Ally Said',
               style: TextStyle(
                 fontFamily: AppTheme.display,
                 fontWeight: FontWeight.w600,
                 fontSize: 22,
-                color: AppColors.ivory,
+                color: k.text,
               ),
             ),
             const SizedBox(height: 14),
@@ -98,8 +100,8 @@ class _AboutSheet extends StatelessWidget {
                 for (final (name, address) in _links)
                   OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.ivory,
-                      side: const BorderSide(color: AppColors.line),
+                      foregroundColor: k.text,
+                      side: BorderSide(color: k.line),
                       minimumSize: const Size(0, 44),
                       padding: const EdgeInsets.symmetric(horizontal: 18),
                     ),

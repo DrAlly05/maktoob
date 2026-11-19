@@ -9,35 +9,41 @@ class AppTheme {
   /// Everything else.
   static const String body = 'Inter';
 
-  static ThemeData get darkTheme {
-    final base = ThemeData(
-      brightness: Brightness.dark,
-      useMaterial3: true,
-      fontFamily: body,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.brass,
-        onPrimary: AppColors.night,
-        secondary: AppColors.lamp,
-        onSecondary: AppColors.night,
-        surface: AppColors.night,
-        onSurface: AppColors.ivory,
-      ),
+  /// Used when the phone is in dark mode.
+  static ThemeData get dark => _build(AppColors.dark, Brightness.dark);
+
+  /// Used when the phone is in light mode.
+  static ThemeData get light => _build(AppColors.light, Brightness.light);
+
+  static ThemeData _build(Palette k, Brightness brightness) {
+    final scheme = ColorScheme(
+      brightness: brightness,
+      primary: k.accent,
+      onPrimary: k.onAccent,
+      secondary: k.heading,
+      onSecondary: k.ground,
+      error: const Color(0xFFB3261E),
+      onError: Colors.white,
+      surface: k.ground,
+      onSurface: k.text,
     );
 
-    return base.copyWith(
-      scaffoldBackgroundColor: AppColors.night,
-      snackBarTheme: const SnackBarThemeData(
-        backgroundColor: AppColors.raised,
+    return ThemeData(
+      brightness: brightness,
+      useMaterial3: true,
+      fontFamily: body,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: k.ground,
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: k.card,
         contentTextStyle: TextStyle(
           fontFamily: body,
           fontSize: 14,
-          color: AppColors.ivory,
+          color: k.text,
         ),
         behavior: SnackBarBehavior.floating,
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.brass,
-      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: k.accent),
     );
   }
 }

@@ -57,6 +57,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
   /// that is still waiting on the voice knows it has been replaced.
   int _runToken = 0;
 
+  /// True while the app itself is turning to another section, so the
+  /// page change is not mistaken for a swipe by the reader.
+  bool _jumping = false;
+
   @override
   void initState() {
     super.initState();
@@ -212,10 +216,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
     });
 
     var reachedEnd = false;
+    var spoke = false;
     try {
       await _audio.stop();
       await _translator.prepare(chapter.language);
       final hasVoice = await _audio.prepare();
+      spoke = hasVoice;
       if (!mounted || token != _runToken) return;
       setState(() {
         _status = hasVoice
@@ -266,9 +272,54 @@ class _ReaderScreenState extends State<ReaderScreen> {
         });
       }
     }
+
+    // At the end of a section the voice carries on into the next one.
+    if (reachedEnd &&
+        spoke &&
+        mounted &&
+        token == _runToken &&
+        chapterIndex + 1 < _chapters.length) {
+      _openSection(chapterIndex + 1, paragraph: 0, play: true);
+    }
+  }
+
+  /// Turns to another section, at [paragraph], and reads from there if asked.
+  Future<void> _openSection(
+    int index, {
+    required int paragraph,
+    required bool play,
+  }) async {
+    if (index < 0 || index >= _chapters.length) return;
+
+    final token = ++_runToken;
+    await _audio.stop();
+    if (!mounted) return;
+    setState(() {
+      _chapterIndex = index;
+      _playing = false;
+      _activeParagraph = null;
+      _resumeParagraph = paragraph;
+      _status = null;
+    });
+
+    _jumping = true;
+    try {
+      await _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOut,
+      );
+    } finally {
+      _jumping = false;
+    }
+
+    if (play && mounted && token == _runToken) {
+      await _play(paragraph);
+    }
   }
 
   void _onChapterChanged(int index) {
+    if (_jumping) return;
     _runToken++;
     _audio.stop();
     setState(() {
@@ -285,20 +336,32 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _audio.setRate(_speeds[_speedIndex].$1);
   }
 
-  /// Moves one paragraph back or forward and reads from there.
+  /// Moves one paragraph back or forward and reads from there. At either
+  /// end of a section it crosses into the section beside it.
   void _skip(int by) {
     final last = _chapters[_chapterIndex].paragraphs.length - 1;
-    var target = (_activeParagraph ?? _resumeParagraph) + by;
-    if (target < 0) target = 0;
-    if (target > last) target = last;
-    _play(target);
+    final target = (_activeParagraph ?? _resumeParagraph) + by;
+    if (target > last) {
+      _openSection(_chapterIndex + 1, paragraph: 0, play: true);
+    } else if (target < 0) {
+      final previous = _chapterIndex - 1;
+      if (previous < 0) return;
+      _openSection(
+        previous,
+        paragraph: _chapters[previous].paragraphs.length - 1,
+        play: true,
+      );
+    } else {
+      _play(target);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final k = AppColors.of(context);
     if (_chapters.isEmpty) {
       return Scaffold(
-        appBar: AppBar(backgroundColor: AppColors.night),
+        appBar: AppBar(backgroundColor: k.ground),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -306,10 +369,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
               'Hakuna maandishi yanayosomeka yaliyopatikana kwenye '
               'kitabu hiki.\n\n${_describeBook(widget.book)}',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 height: 1.5,
-                color: AppColors.mist,
+                color: k.soft,
               ),
             ),
           ),
@@ -350,9 +413,27 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   _play(_resumeParagraph);
                 }
               },
-              onPrevious: shown > 1 ? () => _skip(-1) : null,
-              onNext: shown < count ? () => _skip(1) : null,
+              onPrevious: shown > 1 || _chapterIndex > 0
+                  ? () => _skip(-1)
+                  : null,
+              onNext: shown < count || _chapterIndex + 1 < _chapters.length
+                  ? () => _skip(1)
+                  : null,
               onSpeed: _cycleSpeed,
+              onPreviousSection: _chapterIndex > 0
+                  ? () => _openSection(
+                        _chapterIndex - 1,
+                        paragraph: 0,
+                        play: _playing,
+                      )
+                  : null,
+              onNextSection: _chapterIndex + 1 < _chapters.length
+                  ? () => _openSection(
+                        _chapterIndex + 1,
+                        paragraph: 0,
+                        play: _playing,
+                      )
+                  : null,
             ),
           ],
         ),
@@ -361,11 +442,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   Widget _buildTopBar() {
+    final k = AppColors.of(context);
     ButtonStyle pill({required bool filled}) {
       return OutlinedButton.styleFrom(
-        foregroundColor: filled ? AppColors.night : AppColors.ivory,
-        backgroundColor: filled ? AppColors.lamp : Colors.transparent,
-        side: BorderSide(color: filled ? AppColors.lamp : AppColors.line),
+        foregroundColor: filled ? k.ground : k.text,
+        backgroundColor: filled ? k.heading : Colors.transparent,
+        side: BorderSide(color: filled ? k.heading : k.line),
         minimumSize: const Size(0, 44),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         textStyle: const TextStyle(
@@ -382,7 +464,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
         children: [
           IconButton(
             tooltip: 'Rudi',
-            color: AppColors.ivory,
+            color: k.text,
             onPressed: () => Navigator.maybePop(context),
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           ),
@@ -415,6 +497,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   Widget _buildChapter(int chapterIndex) {
+    final k = AppColors.of(context);
     final chapter = _chapters[chapterIndex];
     final bookTitle = (widget.book.Title ?? '').trim();
 
@@ -431,23 +514,23 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 if (bookTitle.isNotEmpty)
                   Text(
                     bookTitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTheme.display,
                       fontStyle: FontStyle.italic,
                       fontSize: 15,
-                      color: AppColors.mist,
+                      color: k.soft,
                     ),
                   ),
                 if (chapter.title.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
                     chapter.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTheme.display,
                       fontWeight: FontWeight.w600,
                       fontSize: 28,
                       height: 1.15,
-                      color: AppColors.lamp,
+                      color: k.heading,
                     ),
                   ),
                 ],

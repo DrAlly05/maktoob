@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
@@ -19,7 +20,17 @@ class MaktoobApp extends StatelessWidget {
     return MaterialApp(
       title: 'Maktoob',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
+      builder: (context, child) {
+        // Dark status bar icons on the light ground, light ones on the dark.
+        final dark = Theme.of(context).brightness == Brightness.dark;
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: const HomeScreen(),
     );
   }
@@ -64,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final k = AppColors.of(context);
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -79,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
+                    Text(
                       'Soma na sikiliza kitabu chochote kwa Kiswahili.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -87,18 +99,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontWeight: FontWeight.w600,
                         fontSize: 27,
                         height: 1.2,
-                        color: AppColors.lamp,
+                        color: k.heading,
                       ),
                     ),
                     const SizedBox(height: 14),
-                    const Text(
+                    Text(
                       'Chagua kitabu kilicho kwenye simu yako. Maktoob '
                       'itakitafsiri na kukusomea, aya kwa aya.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
                         height: 1.55,
-                        color: AppColors.mist,
+                        color: k.soft,
                       ),
                     ),
                     const SizedBox(height: 26),
@@ -108,8 +120,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ? const Center(child: CircularProgressIndicator())
                           : FilledButton(
                               style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.brass,
-                                foregroundColor: AppColors.night,
+                                backgroundColor: k.accent,
+                                foregroundColor: k.onAccent,
                                 textStyle: const TextStyle(
                                   fontFamily: AppTheme.body,
                                   fontSize: 16,
@@ -126,13 +138,13 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 36),
               const DottedBand(),
               const SizedBox(height: 32),
-              const Text(
+              Text(
                 'JINSI INAVYOFANYA KAZI',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 2,
-                  color: AppColors.dim,
+                  color: k.caption,
                 ),
               ),
               const SizedBox(height: 18),
@@ -157,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Center(
                 child: TextButton(
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.mist,
+                    foregroundColor: k.soft,
                     minimumSize: const Size(0, 44),
                   ),
                   onPressed: () => showAboutMaktoob(context),
@@ -179,11 +191,12 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AppColors.of(context);
     return Row(
       children: [
         const WellMark(size: 46),
         const SizedBox(width: 14),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -194,7 +207,7 @@ class _Header extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   fontSize: 28,
                   height: 1.1,
-                  color: AppColors.lamp,
+                  color: k.heading,
                 ),
               ),
               SizedBox(height: 2),
@@ -204,7 +217,7 @@ class _Header extends StatelessWidget {
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 3,
-                  color: AppColors.mist,
+                  color: k.soft,
                 ),
               ),
             ],
@@ -212,7 +225,7 @@ class _Header extends StatelessWidget {
         ),
         IconButton(
           tooltip: 'Kuhusu Maktoob',
-          color: AppColors.mist,
+          color: k.soft,
           onPressed: onAbout,
           icon: const Icon(Icons.info_outline_rounded),
         ),
@@ -230,6 +243,7 @@ class _Step extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 22),
       child: Row(
@@ -241,15 +255,15 @@ class _Step extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.line, width: 1.5),
+              border: Border.all(color: k.line, width: 1.5),
             ),
             child: Text(
               number,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: AppTheme.display,
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
-                color: AppColors.lamp,
+                color: k.heading,
               ),
             ),
           ),
@@ -260,19 +274,19 @@ class _Step extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.ivory,
+                    color: k.text,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   body,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
-                    color: AppColors.mist,
+                    color: k.soft,
                   ),
                 ),
               ],

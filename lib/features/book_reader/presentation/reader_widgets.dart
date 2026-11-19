@@ -31,6 +31,7 @@ class PassageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AppColors.of(context);
     final translated = swahili != null && swahili!.isNotEmpty;
     final originalSize = fontSize - 4 < 12 ? 12.0 : fontSize - 4;
     final originalDirection =
@@ -46,7 +47,7 @@ class PassageCard extends StatelessWidget {
               fontFamily: AppTheme.display,
               fontSize: fontSize + 3,
               height: 1.45,
-              color: AppColors.ivory,
+              color: k.text,
             ),
           ),
         if (translated && showOriginal) const SizedBox(height: 12),
@@ -57,7 +58,7 @@ class PassageCard extends StatelessWidget {
             style: TextStyle(
               fontSize: translated ? originalSize : fontSize,
               height: 1.6,
-              color: translated ? AppColors.dim : AppColors.mist,
+              color: translated ? k.caption : k.soft,
             ),
           ),
       ],
@@ -91,20 +92,21 @@ class StatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AppColors.of(context);
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.raised,
+        color: k.card,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           height: 1.5,
-          color: AppColors.mist,
+          color: k.soft,
         ),
       ),
     );
@@ -124,6 +126,8 @@ class PlayerBar extends StatelessWidget {
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
   final VoidCallback onSpeed;
+  final VoidCallback? onPreviousSection;
+  final VoidCallback? onNextSection;
 
   const PlayerBar({
     super.key,
@@ -137,63 +141,80 @@ class PlayerBar extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
     required this.onSpeed,
+    this.onPreviousSection,
+    this.onNextSection,
   });
 
   @override
   Widget build(BuildContext context) {
+    final k = AppColors.of(context);
     final progress = paragraphCount == 0 || paragraph >= paragraphCount
         ? (paragraphCount == 0 ? 0.0 : 1.0)
         : paragraph / paragraphCount;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.deep,
+      decoration: BoxDecoration(
+        color: k.sunk,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+          padding: const EdgeInsets.fromLTRB(8, 6, 20, 10),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
+                  _SectionArrow(
+                    icon: Icons.chevron_left_rounded,
+                    tooltip: 'Sehemu iliyopita',
+                    onPressed: onPreviousSection,
+                  ),
                   Text(
                     'Sehemu $section kati ya $sectionCount',
-                    style: const TextStyle(fontSize: 12, color: AppColors.dim),
+                    style: TextStyle(fontSize: 12, color: k.caption),
+                  ),
+                  _SectionArrow(
+                    icon: Icons.chevron_right_rounded,
+                    tooltip: 'Sehemu ijayo',
+                    onPressed: onNextSection,
                   ),
                   const Spacer(),
                   Text(
                     'Aya $paragraph kati ya $paragraphCount',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.mist,
+                      color: k.soft,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 4,
-                  backgroundColor: AppColors.line,
-                  color: AppColors.brass,
+              Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 4,
+                    backgroundColor: k.line,
+                    color: k.accent,
+                  ),
                 ),
               ),
               const SizedBox(height: 6),
-              Row(
+              Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   SizedBox(
                     width: 56,
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.ivory,
-                        side: const BorderSide(color: AppColors.line),
+                        foregroundColor: k.text,
+                        side: BorderSide(color: k.line),
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(56, 44),
                         textStyle: const TextStyle(
@@ -220,10 +241,38 @@ class PlayerBar extends StatelessWidget {
                   const SizedBox(width: 56),
                 ],
               ),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SectionArrow extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  const _SectionArrow({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final k = AppColors.of(context);
+    return IconButton(
+      tooltip: tooltip,
+      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+      padding: EdgeInsets.zero,
+      iconSize: 22,
+      color: k.soft,
+      disabledColor: k.line,
+      onPressed: onPressed,
+      icon: Icon(icon),
     );
   }
 }
@@ -241,7 +290,8 @@ class _SkipButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = onPressed == null ? AppColors.line : AppColors.ivory;
+    final k = AppColors.of(context);
+    final color = onPressed == null ? k.line : k.text;
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: onPressed,
@@ -259,7 +309,7 @@ class _SkipButton extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: onPressed == null ? AppColors.line : AppColors.dim,
+                color: onPressed == null ? k.line : k.caption,
               ),
             ),
           ],
@@ -313,6 +363,7 @@ class _PlayButtonState extends State<PlayButton>
 
   @override
   Widget build(BuildContext context) {
+    final k = AppColors.of(context);
     return SizedBox(
       width: 88,
       height: 88,
@@ -323,7 +374,11 @@ class _PlayButtonState extends State<PlayButton>
             child: AnimatedBuilder(
               animation: _ripple,
               builder: (context, child) => CustomPaint(
-                painter: _RipplePainter(_ripple.value, widget.playing),
+                painter: _RipplePainter(
+                  _ripple.value,
+                  widget.playing,
+                  k.accent,
+                ),
               ),
             ),
           ),
@@ -331,7 +386,7 @@ class _PlayButtonState extends State<PlayButton>
             button: true,
             label: widget.playing ? 'Simamisha' : 'Sikiliza kwa Kiswahili',
             child: Material(
-              color: AppColors.brass,
+              color: k.accent,
               shape: const CircleBorder(),
               child: InkWell(
                 customBorder: const CircleBorder(),
@@ -344,7 +399,7 @@ class _PlayButtonState extends State<PlayButton>
                         ? Icons.pause_rounded
                         : Icons.play_arrow_rounded,
                     size: 34,
-                    color: AppColors.night,
+                    color: k.onAccent,
                   ),
                 ),
               ),
@@ -360,7 +415,9 @@ class _RipplePainter extends CustomPainter {
   final double progress;
   final bool playing;
 
-  const _RipplePainter(this.progress, this.playing);
+  final Color color;
+
+  const _RipplePainter(this.progress, this.playing, this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -370,7 +427,7 @@ class _RipplePainter extends CustomPainter {
         center,
         37,
         Paint()
-          ..color = AppColors.brass.withValues(alpha: 0.3)
+          ..color = color.withValues(alpha: 0.3)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5,
       );
@@ -382,7 +439,7 @@ class _RipplePainter extends CustomPainter {
         center,
         31 + 13 * t,
         Paint()
-          ..color = AppColors.brass.withValues(alpha: 0.55 * (1 - t))
+          ..color = color.withValues(alpha: 0.55 * (1 - t))
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2,
       );
@@ -391,6 +448,8 @@ class _RipplePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _RipplePainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.playing != playing;
+    return oldDelegate.progress != progress ||
+        oldDelegate.playing != playing ||
+        oldDelegate.color != color;
   }
 }

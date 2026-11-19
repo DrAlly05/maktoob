@@ -1,37 +1,88 @@
 import 'package:flutter/material.dart';
 
-/// The Kisima palette: a night sky, brass and lamp light.
-///
-/// Brass is kept for what matters most on a screen: the passage being
-/// read, the play button and progress. Lamp is for headings.
-class AppColors {
-  /// Usiku. The ground of every screen.
-  static const Color night = Color(0xFF131A3A);
+/// One set of colours for the Kisima look. Named by the job each colour
+/// does, so the same names work in the dark and in the light.
+class Palette {
+  /// The ground of every screen.
+  final Color ground;
 
-  /// The water at the bottom of the well. Behind the player.
-  static const Color deep = Color(0xFF0B1028);
+  /// The player bar and bottom sheets.
+  final Color sunk;
 
-  /// The app icon's blue.
-  static const Color well = Color(0xFF18225A);
-
-  /// A surface lifted off the night, for the passage being read.
-  static const Color raised = Color(0xFF1B2450);
+  /// The passage being read, and the one thing a screen is about.
+  final Color card;
 
   /// Hairlines and quiet outlines.
-  static const Color line = Color(0xFF2C3672);
+  final Color line;
 
-  /// Shaba.
-  static const Color brass = Color(0xFFE4B24C);
+  /// Brass. Kept for the active passage, the play button and progress.
+  final Color accent;
 
-  /// Taa.
-  static const Color lamp = Color(0xFFF6E3B4);
+  /// Text and icons that sit on brass.
+  final Color onAccent;
 
-  /// Main reading text. 14.4 to 1 against night.
-  static const Color ivory = Color(0xFFF3EBDD);
+  /// Headings.
+  final Color heading;
 
-  /// Secondary text. 8.0 to 1 against night.
-  static const Color mist = Color(0xFFA9B1D6);
+  /// Main reading text.
+  final Color text;
 
-  /// Captions. 5.6 to 1 against night.
-  static const Color dim = Color(0xFF8D93B0);
+  /// Secondary text.
+  final Color soft;
+
+  /// Captions and labels.
+  final Color caption;
+
+  const Palette({
+    required this.ground,
+    required this.sunk,
+    required this.card,
+    required this.line,
+    required this.accent,
+    required this.onAccent,
+    required this.heading,
+    required this.text,
+    required this.soft,
+    required this.caption,
+  });
+}
+
+class AppColors {
+  /// Usiku: night sky, brass and lamp light.
+  static const Palette dark = Palette(
+    ground: Color(0xFF131A3A),
+    sunk: Color(0xFF0B1028),
+    card: Color(0xFF1B2450),
+    line: Color(0xFF2C3672),
+    accent: Color(0xFFE4B24C),
+    onAccent: Color(0xFF131A3A),
+    heading: Color(0xFFF6E3B4),
+    text: Color(0xFFF3EBDD),
+    soft: Color(0xFFA9B1D6),
+    caption: Color(0xFF8D93B0),
+  );
+
+  /// Mchana: lime-washed wall, ink and darker brass.
+  static const Palette light = Palette(
+    ground: Color(0xFFF6F0E3),
+    sunk: Color(0xFFFBF7EE),
+    card: Color(0xFFFFFDF8),
+    line: Color(0xFFCFC2A8),
+    accent: Color(0xFFB07A12),
+    onAccent: Color(0xFF0B1028),
+    heading: Color(0xFF18225A),
+    text: Color(0xFF1B2040),
+    soft: Color(0xFF4B5275),
+    caption: Color(0xFF5F6583),
+  );
+
+  /// The colours for the phone's current setting, light or dark.
+  static Palette of(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark ? dark : light;
+  }
+
+  /// The mark keeps its own colours in both modes, like the app icon.
+  static const Color markWater = Color(0xFF0B1130);
+  static const Color markRim = Color(0xFFE4B24C);
+  static const Color markDrop = Color(0xFFF6E3B4);
 }

@@ -30,10 +30,14 @@ class _WellPainter extends CustomPainter {
     // The mark is drawn on a 400 unit grid, 200 units from centre to rim.
     final unit = size.shortestSide / 400;
 
-    canvas.drawCircle(center, 200 * unit, Paint()..color = AppColors.deep);
+    canvas.drawCircle(
+      center,
+      200 * unit,
+      Paint()..color = AppColors.markWater,
+    );
 
     final rim = Paint()
-      ..color = AppColors.brass
+      ..color = AppColors.markRim
       ..style = PaintingStyle.stroke
       ..strokeWidth = 52 * unit;
     final rimRect = Rect.fromCircle(center: center, radius: 174 * unit);
@@ -48,11 +52,11 @@ class _WellPainter extends CustomPainter {
       center,
       96 * unit,
       Paint()
-        ..color = AppColors.brass.withValues(alpha: 0.9)
+        ..color = AppColors.markRim.withValues(alpha: 0.9)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 18 * unit,
     );
-    canvas.drawCircle(center, 44 * unit, Paint()..color = AppColors.lamp);
+    canvas.drawCircle(center, 44 * unit, Paint()..color = AppColors.markDrop);
   }
 
   @override
@@ -61,16 +65,18 @@ class _WellPainter extends CustomPainter {
 
 /// A row of small dots, borrowed from the border of a kanga.
 class DottedBand extends StatelessWidget {
-  final Color color;
+  final Color? color;
 
-  const DottedBand({super.key, this.color = AppColors.line});
+  const DottedBand({super.key, this.color});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 8,
       width: double.infinity,
-      child: CustomPaint(painter: _DotsPainter(color)),
+      child: CustomPaint(
+        painter: _DotsPainter(color ?? AppColors.of(context).line),
+      ),
     );
   }
 }
@@ -117,11 +123,12 @@ class ArchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = AppColors.of(context);
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: AppColors.raised,
-        border: Border.all(color: AppColors.brass, width: 1.2),
+        color: k.card,
+        border: Border.all(color: k.accent, width: 1.2),
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(arch),
           topRight: Radius.circular(arch),
