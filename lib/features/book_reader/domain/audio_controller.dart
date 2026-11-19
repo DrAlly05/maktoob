@@ -1,33 +1,43 @@
 import 'package:flutter_tts/flutter_tts.dart';
 
+/// Reads Swahili text aloud with the phone's own voice.
 class AudioController {
   final FlutterTts _tts = FlutterTts();
-  bool isSpeaking = false;
+  bool _ready = false;
+  bool _voiceAvailable = false;
 
-  AudioController() {
-    _initializeTts();
+  /// Sets the voice up once.
+  ///
+  /// Returns false when the phone has no Swahili voice installed.
+  Future<bool> prepare() async {
+    if (_ready) return _voiceAvailable;
+
+    // Makes speak() finish only when the voice has finished the passage.
+    await _tts.awaitSpeakCompletion(true);
+    await _tts.setSpeechRate(0.5);
+    await _tts.setPitch(1.0);
+
+    for (final code in const ['sw-TZ', 'sw-KE', 'sw']) {
+      final available = await _tts.isLanguageAvailable(code);
+      if (available == true) {
+        await _tts.setLanguage(code);
+        _voiceAvailable = true;
+        break;
+      }
+    }
+
+    _ready = true;
+    return _voiceAvailable;
   }
 
-  void _initializeTts() async {
-    // Set baseline audio parameters matching standard narration pacing
-    await _tts.setSpeechRate(0.5); // Elegant, steady narrative flow
-    await _tts.setPitch(1.0); // Well-balanced vocal depth tone
-
-    _tts.setStartHandler(() => isSpeaking = true);
-    _tts.setCompletionHandler(() => isSpeaking = false);
-    _tts.setErrorHandler((msg) => isSpeaking = false);
-  }
-
-  // Dictates chapter content strings on-device instantly
-  Future<void> speak(String text, String languageCode) async {
-    if (text.isEmpty) return;
-    await _tts.setLanguage(languageCode);
+  /// Speaks one passage and completes when the voice has finished it.
+  Future<void> speak(String text) async {
+    if (!_voiceAvailable || text.trim().isEmpty) return;
     await _tts.speak(text);
   }
 
-  // Halts active vocal rendering playback instantly
+  /// Stops the voice at once.
   Future<void> stop() async {
     await _tts.stop();
-    isSpeaking = false;
   }
 }

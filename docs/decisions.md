@@ -33,3 +33,6 @@ Status is PROPOSED until Dr. Ally Said confirms it, then CONFIRMED with the date
 | 2026-11-19 | Android build uses Gradle 9.9.1, Android Gradle Plugin 9.3.3 and Kotlin 2.4.20 | Required by the installed Flutter. Same as Zero to Five | CONFIRMED (in the code) |
 | 2026-11-19 | Syncfusion PDF viewer and the demo reader screen removed. Home opens the real EPUB reader | Only the demo used them, and the demo loaded a file that did not exist. A PDF reader is still to be chosen | CONFIRMED (in the code) |
 | 2026-11-19 | file_picker raised from version 11 to 13 | Version 11 does not compile on the current Android tooling | CONFIRMED (in the code), build passes |
+| 2026-11-19 | The reader translates and speaks one paragraph at a time (pieces of at most 1,200 characters), with the original shown above the Swahili | A whole chapter in one piece is too long for the phone's voice. Paragraph steps also give exact resume | PROPOSED until tested on a phone |
+| 2026-11-19 | Book language is guessed from the script: Arabic script is Arabic, anything else is treated as English | Enough for the first books. Other Latin script languages (Italian, German, French) need real language detection later | PROPOSED, temporary |
+| 2026-11-19 | Language packs may download over mobile data | Many readers have no Wi-Fi | PROPOSED |
