@@ -9,6 +9,7 @@ class AudioController {
   bool _configured = false;
   bool _voiceAvailable = false;
   String _engineNote = '';
+  double _rate = 0.5;
 
   /// A short technical line about the voice engines on this phone,
   /// shown when no Swahili voice is found.
@@ -29,7 +30,7 @@ class AudioController {
     }
 
     await _preferGoogleEngine();
-    await _tts.setSpeechRate(0.5);
+    await _tts.setSpeechRate(_rate);
     await _tts.setPitch(1.0);
 
     for (final code in const ['sw-TZ', 'sw-KE', 'sw']) {
@@ -69,8 +70,23 @@ class AudioController {
     await _tts.speak(text);
   }
 
+  /// Changes how fast the voice speaks. 0.5 is the normal pace.
+  /// The change is heard from the next paragraph.
+  Future<void> setRate(double rate) async {
+    _rate = rate;
+    try {
+      await _tts.setSpeechRate(rate);
+    } catch (_) {
+      // No voice engine yet. The rate is applied when one is prepared.
+    }
+  }
+
   /// Stops the voice at once.
   Future<void> stop() async {
-    await _tts.stop();
+    try {
+      await _tts.stop();
+    } catch (_) {
+      // Nothing was speaking, or there is no voice engine.
+    }
   }
 }

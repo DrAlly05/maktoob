@@ -10,11 +10,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maktoob/main.dart';
 
 void main() {
-  testWidgets('Welcome to Maktoob smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('Home screen offers to open a book', (WidgetTester tester) async {
     await tester.pumpWidget(const MaktoobApp());
 
-    // Verify that the title text is visible.
-    expect(find.text('Welcome to Maktoob'), findsOneWidget);
+    expect(find.text('Maktoob'), findsOneWidget);
+    expect(find.text('Fungua kitabu'), findsOneWidget);
   });
 }

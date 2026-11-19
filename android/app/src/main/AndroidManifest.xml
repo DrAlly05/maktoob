@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Needed once to download a language pack, and to open the founder's links. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Maktoob"
         android:name="${applicationName}"

@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../domain/audio_controller.dart';
 import '../domain/chapter_text.dart';
 import '../domain/translation_controller.dart';
+import 'reader_widgets.dart';
 
 /// Shows a book chapter by chapter. Each paragraph is translated into
 /// Swahili and read aloud one at a time, with the original kept above it.
@@ -41,6 +43,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
   bool _playing = false;
   String? _status;
   double _fontSize = 18.0;
+  bool _showOriginal = true;
+  int _speedIndex = 1;
+
+  /// Voice pace and the label shown for it.
+  static const List<(double, String)> _speeds = [
+    (0.42, '0.8x'),
+    (0.5, '1.0x'),
+    (0.6, '1.2x'),
+  ];
 
   /// Raised every time listening starts or stops, so an older run
   /// that is still waiting on the voice knows it has been replaced.
@@ -196,8 +207,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
     setState(() {
       _playing = true;
       _activeParagraph = fromParagraph;
-      _status = 'Preparing Swahili. The first time needs internet '
-          'to download the language pack.';
+      _status = 'Inaandaa Kiswahili. Mara ya kwanza inahitaji intaneti '
+          'ili kupakua kifurushi cha lugha.';
     });
 
     var reachedEnd = false;
@@ -209,9 +220,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
       setState(() {
         _status = hasVoice
             ? null
-            : 'No Swahili voice on this phone yet, so only the text is shown. '
-                'To hear it, install "Speech Recognition & Synthesis" by '
-                'Google from the Play Store and download Swahili inside it.\n'
+            : 'Simu hii bado haina sauti ya Kiswahili, kwa hiyo '
+                'maandishi tu yanaonyeshwa. Ili kusikia, weka '
+                '"Speech Recognition & Synthesis" ya Google kutoka '
+                'Play Store, kisha pakua Kiswahili ndani yake.\n'
                 '${_audio.engineNote}';
       });
 
@@ -241,8 +253,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
     } catch (_) {
       if (mounted && token == _runToken) {
         setState(() {
-          _status = 'Swahili could not start. Check the internet connection '
-              'and the free storage on this phone, then try again.';
+          _status = 'Kiswahili hakikuweza kuanza. Kagua intaneti na nafasi '
+              'ya simu, kisha jaribu tena.';
         });
       }
     } finally {
@@ -268,189 +280,195 @@ class _ReaderScreenState extends State<ReaderScreen> {
     });
   }
 
+  void _cycleSpeed() {
+    setState(() => _speedIndex = (_speedIndex + 1) % _speeds.length);
+    _audio.setRate(_speeds[_speedIndex].$1);
+  }
+
+  /// Moves one paragraph back or forward and reads from there.
+  void _skip(int by) {
+    final last = _chapters[_chapterIndex].paragraphs.length - 1;
+    var target = (_activeParagraph ?? _resumeParagraph) + by;
+    if (target < 0) target = 0;
+    if (target > last) target = last;
+    _play(target);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bookTitle = (widget.book.Title ?? '').trim();
+    if (_chapters.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(backgroundColor: AppColors.night),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'Hakuna maandishi yanayosomeka yaliyopatikana kwenye '
+              'kitabu hiki.\n\n${_describeBook(widget.book)}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.5,
+                color: AppColors.mist,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final chapter = _chapters[_chapterIndex];
+    final count = chapter.paragraphs.length;
+    final shown = (_activeParagraph ?? _resumeParagraph) + 1;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          bookTitle.isEmpty ? 'Maktoob' : bookTitle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Text size',
-            icon: const Icon(Icons.text_fields_rounded),
-            onPressed: () {
-              HapticFeedback.selectionClick();
-              setState(() {
-                _fontSize = _fontSize >= 26.0 ? 16.0 : _fontSize + 2.0;
-              });
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: _chapters.isEmpty
-          ? null
-          : FloatingActionButton.extended(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              onPressed: () {
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _buildTopBar(),
+            if (_status != null) StatusBanner(text: _status!),
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _chapters.length,
+                onPageChanged: _onChapterChanged,
+                itemBuilder: (context, index) => _buildChapter(index),
+              ),
+            ),
+            PlayerBar(
+              playing: _playing,
+              section: _chapterIndex + 1,
+              sectionCount: _chapters.length,
+              paragraph: shown,
+              paragraphCount: count,
+              speedLabel: _speeds[_speedIndex].$2,
+              onPlayPause: () {
                 if (_playing) {
                   _stop();
                 } else {
                   _play(_resumeParagraph);
                 }
               },
-              icon: Icon(
-                _playing ? Icons.stop_rounded : Icons.play_arrow_rounded,
-              ),
-              label: Text(
-                _playing
-                    ? 'Stop'
-                    : (_resumeParagraph > 0
-                        ? 'Continue in Swahili'
-                        : 'Listen in Swahili'),
-              ),
+              onPrevious: shown > 1 ? () => _skip(-1) : null,
+              onNext: shown < count ? () => _skip(1) : null,
+              onSpeed: _cycleSpeed,
             ),
-      body: _chapters.isEmpty
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'No readable text was found in this book.\n\n'
-                  '${_describeBook(widget.book)}',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            )
-          : Column(
-              children: [
-                if (_status != null) _StatusBanner(text: _status!),
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: _chapters.length,
-                    onPageChanged: _onChapterChanged,
-                    itemBuilder: (context, index) => _buildChapter(index),
-                  ),
-                ),
-              ],
-            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildChapter(int chapterIndex) {
-    final chapter = _chapters[chapterIndex];
+  Widget _buildTopBar() {
+    ButtonStyle pill({required bool filled}) {
+      return OutlinedButton.styleFrom(
+        foregroundColor: filled ? AppColors.night : AppColors.ivory,
+        backgroundColor: filled ? AppColors.lamp : Colors.transparent,
+        side: BorderSide(color: filled ? AppColors.lamp : AppColors.line),
+        minimumSize: const Size(0, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        textStyle: const TextStyle(
+          fontFamily: AppTheme.body,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 16, 4),
+      child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(
-              'SECTION ${chapterIndex + 1} OF ${_chapters.length}',
-              style: const TextStyle(
-                fontSize: 11,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textSecondary,
-              ),
+          IconButton(
+            tooltip: 'Rudi',
+            color: AppColors.ivory,
+            onPressed: () => Navigator.maybePop(context),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          ),
+          const Spacer(),
+          Tooltip(
+            message: 'Onyesha au ficha maandishi ya asili',
+            child: OutlinedButton(
+              style: pill(filled: _showOriginal),
+              onPressed: () => setState(() => _showOriginal = !_showOriginal),
+              child: const Text('Asili'),
             ),
           ),
-          if (chapter.title.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-              child: Text(
-                chapter.title,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
+          const SizedBox(width: 8),
+          Tooltip(
+            message: 'Ukubwa wa maandishi',
+            child: OutlinedButton(
+              style: pill(filled: false),
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                setState(() {
+                  _fontSize = _fontSize >= 26.0 ? 16.0 : _fontSize + 2.0;
+                });
+              },
+              child: const Text('Aa'),
             ),
-          const SizedBox(height: 16),
-          for (var i = 0; i < chapter.paragraphs.length; i++)
-            _buildParagraph(chapterIndex, i, chapter),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildParagraph(int chapterIndex, int index, _Chapter chapter) {
-    final isActive =
-        _playing && chapterIndex == _chapterIndex && _activeParagraph == index;
-    final swahili = _translations[_key(chapterIndex, index)];
-    final isRightToLeft = chapter.language == BookLanguage.arabic;
+  Widget _buildChapter(int chapterIndex) {
+    final chapter = _chapters[chapterIndex];
+    final bookTitle = (widget.book.Title ?? '').trim();
 
-    return Padding(
-      key: _paragraphKey(chapterIndex, index),
-      padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () => _play(index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: isActive ? AppColors.card : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isActive ? AppColors.accent : Colors.transparent,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (bookTitle.isNotEmpty)
+                  Text(
+                    bookTitle,
+                    style: const TextStyle(
+                      fontFamily: AppTheme.display,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 15,
+                      color: AppColors.mist,
+                    ),
+                  ),
+                if (chapter.title.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    chapter.title,
+                    style: const TextStyle(
+                      fontFamily: AppTheme.display,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 28,
+                      height: 1.15,
+                      color: AppColors.lamp,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                chapter.paragraphs[index],
-                textDirection:
-                    isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
-                style: TextStyle(
-                  fontSize: _fontSize,
-                  height: 1.7,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              if (swahili != null && swahili.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  swahili,
-                  style: TextStyle(
-                    fontSize: _fontSize - 1,
-                    height: 1.6,
-                    color: AppColors.accent,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusBanner extends StatelessWidget {
-  final String text;
-
-  const _StatusBanner({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: AppColors.card,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          const SizedBox(height: 28),
+          for (var i = 0; i < chapter.paragraphs.length; i++)
+            PassageCard(
+              key: _paragraphKey(chapterIndex, i),
+              original: chapter.paragraphs[i],
+              swahili: _translations[_key(chapterIndex, i)],
+              active: _playing &&
+                  chapterIndex == _chapterIndex &&
+                  _activeParagraph == i,
+              showOriginal: _showOriginal,
+              originalRightToLeft: chapter.language == BookLanguage.arabic,
+              fontSize: _fontSize,
+              onTap: () => _play(i),
+            ),
+        ],
       ),
     );
   }

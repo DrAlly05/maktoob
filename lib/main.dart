@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+
+import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/kisima.dart';
+import 'features/about/about_sheet.dart';
 import 'features/book_reader/presentation/reader_screen.dart';
 import 'file_manager.dart';
 
@@ -46,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (book == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('This file could not be opened as an EPUB book.'),
+          content: Text('Faili hili halikuweza kufunguliwa kama kitabu.'),
         ),
       );
       return;
@@ -61,32 +65,220 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Maktoob 📖'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Welcome to Maktoob',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 40),
-            if (_opening)
-              const CircularProgressIndicator()
-            else
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  textStyle: const TextStyle(fontSize: 18),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _Header(onAbout: () => showAboutMaktoob(context)),
+              const SizedBox(height: 36),
+              ArchCard(
+                arch: 72,
+                padding: const EdgeInsets.fromLTRB(24, 44, 24, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Soma na sikiliza kitabu chochote kwa Kiswahili.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: AppTheme.display,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 27,
+                        height: 1.2,
+                        color: AppColors.lamp,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Chagua kitabu kilicho kwenye simu yako. Maktoob '
+                      'itakitafsiri na kukusomea, aya kwa aya.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.55,
+                        color: AppColors.mist,
+                      ),
+                    ),
+                    const SizedBox(height: 26),
+                    SizedBox(
+                      height: 54,
+                      child: _opening
+                          ? const Center(child: CircularProgressIndicator())
+                          : FilledButton(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.brass,
+                                foregroundColor: AppColors.night,
+                                textStyle: const TextStyle(
+                                  fontFamily: AppTheme.body,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              onPressed: _openBook,
+                              child: const Text('Fungua kitabu'),
+                            ),
+                    ),
+                  ],
                 ),
-                onPressed: _openBook,
-                child: const Text('Open a book (EPUB)'),
               ),
-          ],
+              const SizedBox(height: 36),
+              const DottedBand(),
+              const SizedBox(height: 32),
+              const Text(
+                'JINSI INAVYOFANYA KAZI',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2,
+                  color: AppColors.dim,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const _Step(
+                number: '1',
+                title: 'Chagua kitabu',
+                body: 'Faili la EPUB lililo kwenye simu yako.',
+              ),
+              const _Step(
+                number: '2',
+                title: 'Bonyeza Sikiliza',
+                body: 'Tafsiri hufanyika ndani ya simu. Intaneti '
+                    'inahitajika mara ya kwanza tu.',
+              ),
+              const _Step(
+                number: '3',
+                title: 'Fuata kwa macho na masikio',
+                body: 'Aya inayosomwa huwaka, na unaweza kuona '
+                    'maandishi ya asili chini yake.',
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.mist,
+                    minimumSize: const Size(0, 44),
+                  ),
+                  onPressed: () => showAboutMaktoob(context),
+                  child: const Text('Imetengenezwa na Dkt. Ally Said'),
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  final VoidCallback onAbout;
+
+  const _Header({required this.onAbout});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const WellMark(size: 46),
+        const SizedBox(width: 14),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Maktoob',
+                style: TextStyle(
+                  fontFamily: AppTheme.display,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 28,
+                  height: 1.1,
+                  color: AppColors.lamp,
+                ),
+              ),
+              SizedBox(height: 2),
+              Text(
+                'KISIMA CHA MAARIFA',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 3,
+                  color: AppColors.mist,
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          tooltip: 'Kuhusu Maktoob',
+          color: AppColors.mist,
+          onPressed: onAbout,
+          icon: const Icon(Icons.info_outline_rounded),
+        ),
+      ],
+    );
+  }
+}
+
+class _Step extends StatelessWidget {
+  final String number;
+  final String title;
+  final String body;
+
+  const _Step({required this.number, required this.title, required this.body});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 22),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.line, width: 1.5),
+            ),
+            child: Text(
+              number,
+              style: const TextStyle(
+                fontFamily: AppTheme.display,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                color: AppColors.lamp,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ivory,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  body,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: AppColors.mist,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
